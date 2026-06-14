@@ -6,6 +6,7 @@ __pycache__/
 .env
 *.log
 data/*.sqlite3
+*.sqlite3
 media/
 venv/
 .mypy_cache/
