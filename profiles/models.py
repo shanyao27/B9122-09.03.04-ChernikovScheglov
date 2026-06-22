@@ -128,7 +128,7 @@ class WorkObject(models.Model):
 
     @property
     def assigned_employees_count(self):
-        return self.employees.count()
+        return self.employees.count() + (1 if self.leadEmployee_id else 0)
 
     @property
     def can_assign_lead(self):
@@ -154,7 +154,8 @@ class WorkObject(models.Model):
             self.status = 'in_progress'
         elif self.status == 'in_progress' and self.planned_end_time and now >= self.planned_end_time:
             pass
-        if self.employees.count() >= self.employeesNeeded:
+        total_assigned = self.employees.count() + (1 if self.leadEmployee_id else 0)
+        if total_assigned >= self.employeesNeeded:
             self.employeesReady = True
         self.save(update_fields=['status', 'employeesReady'])
         return self.status

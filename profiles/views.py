@@ -5,6 +5,7 @@ from django.utils import timezone as dj_timezone
 from django.forms.models import modelform_factory
 from main_page.models import User, Admin, Inspector, Medic
 from datetime import timedelta
+import json
 from .models import (
     WorkObject, CertificationTest, Question, UserTestAttempt, UserBlock, Document, UserAnswer,
     DocumentSignature, ViolationSnapshot, MedicalCheck, SickLeave, Sanction, Department, VideoInspection, ViolationType
@@ -307,8 +308,13 @@ def admin_workobject_create(request):
 
     if request.method == 'POST':
         form = WorkObjectForm(request.POST, current_admin=admin)
-        form.fields['employees'].queryset = available_employees.exclude(role='lead')
-        form.fields['leadEmployee'].queryset = available_employees.filter(role='lead')
+        if admin and admin.is_global_admin:
+            all_for_validation = User.objects.filter(isActive=True).select_related('position', 'department')
+            form.fields['employees'].queryset = all_for_validation.exclude(role='lead')
+            form.fields['leadEmployee'].queryset = all_for_validation.filter(role='lead')
+        else:
+            form.fields['employees'].queryset = available_employees.exclude(role='lead')
+            form.fields['leadEmployee'].queryset = available_employees.filter(role='lead')
         if form.is_valid():
             obj = form.save(commit=False)
             obj.created_by_admin = admin
@@ -324,11 +330,32 @@ def admin_workobject_create(request):
         form.fields['employees'].queryset = available_employees.exclude(role='lead')
         form.fields['leadEmployee'].queryset = available_employees.filter(role='lead')
 
+    all_employees_json = '[]'
+    if admin and admin.is_global_admin:
+        all_qs = User.objects.filter(
+            isActive=True,
+            system_role='employee',
+            employment_status='active',
+        ).select_related('position', 'department').order_by('position__name', 'FIO')
+        allowed = [u for u in all_qs if u.AllowedToWork]
+        all_employees_json = json.dumps([
+            {
+                'id': u.id,
+                'fio': u.FIO,
+                'login': u.login,
+                'role': u.role,
+                'department_id': u.department_id,
+                'position_name': u.position.name if u.position else '',
+            }
+            for u in allowed
+        ], ensure_ascii=False)
+
     return render(request, 'profiles/admin/workobject_form.html', {
         'form': form,
         'title': 'Создание наряда',
         'admin_obj': admin,
         'available_employees': available_employees,
+        'all_employees_json': all_employees_json,
     })
 
 

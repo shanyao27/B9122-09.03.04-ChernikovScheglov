@@ -6,28 +6,36 @@
     <div class="d-flex justify-content-between align-items-center mb-4"><h2>{{ title }}</h2></div>
     <div class="card">
       <div class="card-body">
-        <form method="post">
+        <form method="post" autocomplete="off">
           {% csrf_token %}
           {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
 
           {% for field in form %}
             {% if field.name == 'department' or field.name == 'responsible_admin' %}
-              <div class="mb-3">
-                <label class="form-label">{{ field.label }}</label>
-                <div class="form-control-plaintext pt-1" style="border: 1px solid var(--line); border-radius: 10px; padding: 0.62rem 1rem; background: var(--pale);">
-                  {% if field.name == 'department' %}
-                    {{ admin_obj.department.name|default:'Не назначен' }}
-                  {% else %}
-                    {{ admin_obj.full_name|default:admin_obj.login }}
-                  {% endif %}
+              {% if admin_obj.is_global_admin and field.name == 'department' %}
+                <div class="mb-3">
+                  <label class="form-label">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
                 </div>
-                {% if field.name == 'department' %}
-                  <input type="hidden" name="{{ field.name }}" value="{{ admin_obj.department.id|default:'' }}">
-                {% else %}
-                  <input type="hidden" name="{{ field.name }}" value="{{ admin_obj.id }}">
-                {% endif %}
-                <div class="form-text text-muted">Поле определяется автоматически и не может быть изменено</div>
-              </div>
+              {% else %}
+                <div class="mb-3">
+                  <label class="form-label">{{ field.label }}</label>
+                  <div class="form-control-plaintext pt-1" style="border: 1px solid var(--line); border-radius: 10px; padding: 0.62rem 1rem; background: var(--pale);">
+                    {% if field.name == 'department' %}
+                      {{ admin_obj.department.name|default:'Не назначен' }}
+                    {% else %}
+                      {{ admin_obj.full_name|default:admin_obj.login }}
+                    {% endif %}
+                  </div>
+                  {% if field.name == 'department' %}
+                    <input type="hidden" name="{{ field.name }}" value="{{ admin_obj.department.id|default:'' }}">
+                  {% else %}
+                    <input type="hidden" name="{{ field.name }}" value="{{ admin_obj.id }}">
+                  {% endif %}
+                  <div class="form-text text-muted">Поле определяется автоматически и не может быть изменено</div>
+                </div>
+              {% endif %}
             {% elif field.name != 'employees' %}
               <div class="mb-3">
                 <label class="form-label">{{ field.label }}</label>
@@ -44,36 +52,39 @@
               <div class="mb-3">
                 <input type="text" class="form-control form-control-sm" id="searchEmployee" placeholder="Поиск по ФИО">
               </div>
-              <div class="list-group">
-                {% regroup form.fields.employees.queryset by position.name as position_list %}
-                {% for position in position_list %}
-                  <div class="list-group-item" style="border-left: 3px solid var(--blue); margin-bottom: 5px; border-radius: 8px;">
-                    <div class="fw-bold mb-2" style="color: var(--navy);">
-                      {{ position.grouper|default:"Должность не указана" }}
-                      <span class="badge" style="background: var(--pale); color: var(--navy); float: right;">{{ position.list|length }}</span>
-                    </div>
-                    {% for emp in position.list %}
-                    {% if emp.role != 'lead' %}
-                      <div class="form-check ms-3 py-1" data-fio="{{ emp.FIO|lower }}">
-                        <input class="form-check-input employee-checkbox" type="checkbox"
-                               name="employees" value="{{ emp.id }}" id="emp_{{ emp.id }}"
-                               {% if emp in form.instance.employees.all %}checked{% endif %}>
-                        <label class="form-check-label" for="emp_{{ emp.id }}">
-                          {{ emp.FIO }}
-                          <span class="text-muted small">({{ emp.login }})</span>
-                          {% if emp.role == 'lead' %}
-                            <span class="badge" style="background: var(--blue); color: var(--white); margin-left: 8px;">Старший</span>
-                          {% endif %}
-                        </label>
+              <div class="list-group" id="employee-list-group">
+                {% if admin_obj.is_global_admin %}
+                  <div id="dept-prompt" class="alert alert-custom text-center mb-0">
+                    Выберите участок для отображения сотрудников
+                  </div>
+                {% else %}
+                  {% regroup form.fields.employees.queryset by position.name as position_list %}
+                  {% for position in position_list %}
+                    <div class="list-group-item" style="border-left: 3px solid var(--blue); margin-bottom: 5px; border-radius: 8px;">
+                      <div class="fw-bold mb-2" style="color: var(--navy);">
+                        {{ position.grouper|default:"Должность не указана" }}
+                        <span class="badge" style="background: var(--pale); color: var(--navy); float: right;">{{ position.list|length }}</span>
                       </div>
-                    {% endif %}
-                    {% endfor %}
-                  </div>
-                {% empty %}
-                  <div class="alert alert-custom text-center mb-0">
-                    Нет доступных сотрудников на вашем участке
-                  </div>
-                {% endfor %}
+                      {% for emp in position.list %}
+                      {% if emp.role != 'lead' %}
+                        <div class="form-check ms-3 py-1" data-fio="{{ emp.FIO|lower }}">
+                          <input class="form-check-input employee-checkbox" type="checkbox"
+                                 name="employees" value="{{ emp.id }}" id="emp_{{ emp.id }}"
+                                 {% if emp in form.instance.employees.all %}checked{% endif %}>
+                          <label class="form-check-label" for="emp_{{ emp.id }}">
+                            {{ emp.FIO }}
+                            <span class="text-muted small">({{ emp.login }})</span>
+                          </label>
+                        </div>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% empty %}
+                    <div class="alert alert-custom text-center mb-0">
+                      Нет доступных сотрудников на вашем участке
+                    </div>
+                  {% endfor %}
+                {% endif %}
               </div>
             </div>
             <div class="mt-2">
@@ -123,5 +134,74 @@ document.getElementById('searchEmployee').addEventListener('input', function(e) 
     }
   });
 });
+
+{% if admin_obj.is_global_admin %}
+const allEmployees = {{ all_employees_json|safe }};
+
+const deptSelect = document.getElementById('id_department');
+if (deptSelect) {
+  deptSelect.addEventListener('change', function() {
+    filterByDepartment(parseInt(this.value) || null);
+  });
+}
+
+function filterByDepartment(deptId) {
+  const listGroup = document.getElementById('employee-list-group');
+  const prompt = document.getElementById('dept-prompt');
+  const leadSelect = document.getElementById('id_leadEmployee');
+
+  if (!deptId) {
+    listGroup.innerHTML = '<div id="dept-prompt" class="alert alert-custom text-center mb-0">Выберите участок для отображения сотрудников</div>';
+    if (leadSelect) {
+      leadSelect.innerHTML = '<option value="">Не выбран</option>';
+    }
+    return;
+  }
+
+  const filtered = allEmployees.filter(e => e.department_id === deptId);
+  const workers = filtered.filter(e => e.role !== 'lead');
+  const leads = filtered.filter(e => e.role === 'lead');
+
+  if (leadSelect) {
+    leadSelect.innerHTML = '<option value="">Не выбран</option>';
+    leads.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = e.fio;
+      leadSelect.appendChild(opt);
+    });
+  }
+
+  if (workers.length === 0) {
+    listGroup.innerHTML = '<div class="alert alert-custom text-center mb-0">Нет доступных сотрудников на этом участке</div>';
+    return;
+  }
+
+  const byPosition = {};
+  workers.forEach(e => {
+    const pos = e.position_name || 'Должность не указана';
+    if (!byPosition[pos]) byPosition[pos] = [];
+    byPosition[pos].push(e);
+  });
+
+  listGroup.innerHTML = Object.entries(byPosition).map(([pos, emps]) => `
+    <div class="list-group-item" style="border-left: 3px solid var(--blue); margin-bottom: 5px; border-radius: 8px;">
+      <div class="fw-bold mb-2" style="color: var(--navy);">
+        ${pos}
+        <span class="badge" style="background: var(--pale); color: var(--navy); float: right;">${emps.length}</span>
+      </div>
+      ${emps.map(e => `
+        <div class="form-check ms-3 py-1" data-fio="${e.fio.toLowerCase()}">
+          <input class="form-check-input employee-checkbox" type="checkbox"
+                 name="employees" value="${e.id}" id="emp_${e.id}">
+          <label class="form-check-label" for="emp_${e.id}">
+            ${e.fio} <span class="text-muted small">(${e.login})</span>
+          </label>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+{% endif %}
 </script>
 {% endblock %}

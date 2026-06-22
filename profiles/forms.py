@@ -60,8 +60,10 @@ class WorkObjectForm(forms.ModelForm):
             self.fields['responsible_admin'].disabled = True
             self.fields['responsible_admin'].required = True
         else:
-            self.fields['department'].queryset = Department.objects.filter(is_active=True)
-            self.fields['responsible_admin'].queryset = Admin.objects.all()
+            self.fields['department'].queryset = Department.objects.all()
+            self.fields['responsible_admin'].queryset = Admin.objects.filter(is_global_admin=True)
+            if current_admin:
+                self.fields['responsible_admin'].initial = current_admin.id
             self.fields['department'].required = True
             self.fields['responsible_admin'].required = True
 
