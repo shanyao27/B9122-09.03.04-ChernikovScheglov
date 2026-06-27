@@ -1,4 +1,4 @@
-# Personnel Control — Запуск через Docker
+# Запуск проекта
 
 ## Требования
 
@@ -60,3 +60,17 @@ http://localhost
 | `inspector_transport` | `inspector_transport` | Инспектор транспортного участка |
 | `inspector_mech` | `inspector_mech` | Инспектор механического участка |
 
+### 5. Визуализация
+
+1. Приветственная страница
+<img width="2940" height="1438" alt="image" src="https://github.com/user-attachments/assets/6a6c046b-0cc3-4963-9a39-08bf7ca285ee"/>
+2. Страница входа 
+<img width="1470" height="722" alt="Снимок экрана 2026-06-27 в 14 59 57" src="https://github.com/user-attachments/assets/c682b4f3-d75d-422a-ab97-29f4358608fd" />
+3. Панель администратора (аналогично для инспектора и медицинского работника)
+<img width="1470" height="721" alt="Снимок экрана 2026-06-27 в 15 00 47" src="https://github.com/user-attachments/assets/7ae06a0c-ec21-49e5-8d1a-d4f27a28a138" />
+4. Страница регистрации
+![Uploading Снимок экрана 2026-06-27 в 15.01.40.png…]()
+5. Подтверждение регистрации пользователя
+<img width="1470" height="719" alt="Снимок экрана 2026-06-27 в 15 02 47" src="https://github.com/user-attachments/assets/5637eaea-e45e-486b-ba47-65b476376ab8" />
+6. Панель сотрудника
+<img width="1470" height="722" alt="Снимок экрана 2026-06-27 в 15 21 30" src="https://github.com/user-attachments/assets/2bd60239-7e65-465b-88c3-ebadc321c3d1" />
